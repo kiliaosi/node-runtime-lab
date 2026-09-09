@@ -1,0 +1,16 @@
+{
+  "clangd.arguments": [
+    "--background-index",
+    "--clang-tidy",
+    "--completion-style=detailed",
+    "--header-insertion=never"
+  ],
+  "cmake.configureOnOpen": false,
+  "files.associations": {
+    "*.inc": "cpp"
+  },
+  "files.exclude": {
+    "**/.cache": true,
+    "**/build": true
+  }
+}

@@ -1,0 +1,31 @@
+# Course-local build products
+build/
+out/
+.cache/
+compile_commands.json
+
+# Large upstream source trees live on the Linux data disk, never in this repo.
+sources/
+vendor/
+
+# Native build output
+*.o
+*.obj
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+*.out
+
+# Node.js
+node_modules/
+npm-debug.log*
+
+# Editors / OS
+.idea/
+.DS_Store
+Thumbs.db
+
+# Learning notes that may contain machine-specific traces
+traces/

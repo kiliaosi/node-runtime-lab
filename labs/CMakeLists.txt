@@ -19,4 +19,5 @@ set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 add_subdirectory("${LIBUV_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/_deps/libuv" EXCLUDE_FROM_ALL)
 
+add_subdirectory(01-libuv/00-empty-loop)
 add_subdirectory(01-libuv/01-loop-basics)

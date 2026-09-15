@@ -8,7 +8,11 @@ static void on_timer(uv_timer_t* timer) {
   int is_active_flag3 = uv_is_active((uv_handle_t*)timer);
 
   printf("定时器对象是否存活3：%d\n", is_active_flag3);
+
+  printf("handle是否关闭1:%d\n", uv_is_closing((uv_handle_t*)timer));
   uv_close((uv_handle_t*)timer, NULL);
+  printf("handle是否关闭2:%d\n", uv_is_closing((uv_handle_t*)timer));
+
 }
 
 int main(void) {
@@ -16,7 +20,15 @@ int main(void) {
   uv_timer_t timer;
 
   int init_flag = uv_loop_init(&loop);
+
+  int is_alive1 = uv_loop_alive(&loop);
+  printf("loop是否存活1：%d\n", is_alive1);
+
   int init_timer_flag = uv_timer_init(&loop, &timer);
+
+  int is_alive2 = uv_loop_alive(&loop);
+  printf("loop是否存活2：%d\n", is_alive2);
+  
   int is_active_flag = uv_is_active((uv_handle_t*)&timer);
 
   printf("定时器对象是否存活1：%d\n", is_active_flag);
@@ -26,6 +38,9 @@ int main(void) {
   int timer_start_flag = uv_timer_start(&timer, on_timer, 1000, 0);
   int is_active_flag2 = uv_is_active((uv_handle_t*)&timer);
 
+  int is_alive3 = uv_loop_alive(&loop);
+  printf("loop是否存活3：%d\n", is_alive3);
+
   printf("定时器启动结果：%d\n", timer_start_flag);
   printf("定时器对象是否存活2：%d\n", is_active_flag2);
   printf("进入uv_run前\n");
@@ -33,6 +48,9 @@ int main(void) {
   int run_flag = uv_run(&loop, UV_RUN_DEFAULT);
 
   printf("uv_run后：%d\n", run_flag);
+  int is_alive4 = uv_loop_alive(&loop);
+  printf("loop是否存活4：%d\n", is_alive4);
+  
 
   int close_flag = uv_loop_close(&loop);
 
@@ -45,4 +63,12 @@ int main(void) {
   }
 
   return EXIT_SUCCESS;
+}
+
+
+
+// uv第一天的复习
+
+void test() {
+
 }

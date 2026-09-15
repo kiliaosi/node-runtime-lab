@@ -56,7 +56,7 @@ int uv_timer_start(uv_timer_t* timer,
 int uv_is_active(const uv_handle_t* handle);
 ```
 
-`uv_is_active()` 检查 handle 是否处于活动状态，不检查结构体内存是否仍然存在。实验观察到一次性 timer 的状态变化：
+`uv_is_active()` 检查 handle 的 active 标志，不检查结构体内存是否仍然存在。libuv 没有独立的 `inactive` 状态、标志或 `uv_is_inactive()` API；口语中的“不活动”只表示 `uv_is_active()` 返回 `0`。实验观察到一次性 timer 的 active 标志变化：
 
 ```text
 uv_timer_init 后                 active = 0
@@ -64,7 +64,7 @@ uv_timer_start 后                active = 1
 进入一次性 timer 回调时          active = 0
 ```
 
-一次性 timer 到期后，libuv 会先停止它，再调用用户回调。因此进入回调时已经 inactive，但 handle 仍然存在且尚未关闭。
+一次性 timer 到期后，libuv 会先停止它，再调用用户回调。因此进入回调时 `active = 0`，但 handle 仍然存在且尚未关闭。不能把这一结果建模为一个与 `closing`、`closed` 并列的 `inactive` 生命周期状态。
 
 ## 四、关闭 handle
 
@@ -155,7 +155,7 @@ uv_loop_t + uv_handle_t + uv_req_t 构成核心对象模型。
 uv_timer_t 是 handle，不是 request。
 uv_timer_start() 登记任务，uv_run() 驱动循环并可能阻塞等待。
 uv_close() 是异步关闭，loop 负责推进关闭流程。
-active、closing、内存仍存在是三个不同概念。
+active 标志、closing 标志和内存仍存在是不同概念；不能增加一个独立的 inactive 生命周期状态。
 ```
 
 下一步：观察 `uv_is_closing()`，然后学习 `uv_ref()`、`uv_unref()`、`uv_loop_alive()` 与三种 `uv_run` 模式。

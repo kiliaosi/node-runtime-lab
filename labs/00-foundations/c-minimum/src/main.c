@@ -1,13 +1,21 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "task.h"
+
 
 void test_ptr(void);
 void test_struct(void);
 void struct_ptr(void);
 void link_list(void);
 void heap_node(void);
-void heap_node(void);
+void heap_list(void);
+void test_buffer();
+int calculate(int num1, int num2, int (*operation)(int, int));
+int add(int, int);
+int calculate_with_context(int num1, int num2, Operation operation, void* context);
+
+
 
 typedef struct {
   int x;
@@ -27,12 +35,104 @@ struct Node {
   Node* next;
 };
 
+Node* create_node(void* data);
+void destroy_list(Node** head);
+void print_nodes(Node* node[], size_t size);
+
+
+
+
+
 int main(void) {
   test_ptr();
   test_struct();
   struct_ptr();
   link_list();
   heap_node();
+  heap_list();
+  test_buffer();
+  int sum = calculate(2, 4, add);
+  printf("2 + 4 = %d\n", sum);
+
+  int bias = 10;
+
+  int sum_with_bias = calculate_with_context(2, 4, add_with_bias, &bias);
+  printf("2 + 4 + bias(10) = %d\n", sum_with_bias);
+
+  Task task = {.operation = add_with_bias, .context = &bias};
+
+  int result = task.operation(2, 4, task.context);
+
+  printf("%d", result);
+
+  int parepare_result = prepare_task(&task, bias);
+
+  if (parepare_result == TASK_OK) {
+
+    task.operation(2,4, task.context);
+
+    destroy_task(&task);
+  }
+
+  // taskNode
+
+  TaskNode* task_node = create_task_node(bias);
+
+  if(task_node == NULL) {
+    printf("create_task_node failed\n");
+    return EXIT_FAILURE;
+  }
+
+  int node_result = task_node->task->operation(2, 4, task_node->task->context);
+
+  printf("\n node_result is: %d\n", node_result);
+
+  destroy_task_node(&task_node);
+  printf("after destroy: node == NULL: %d\n", task_node == NULL);
+
+  destroy_task_node(&task_node);
+  printf("second destroy: node == NULL: %d\n", task_node == NULL);
+
+  // 测试
+
+
+  int bias_array[] = {30, 20, 10};
+
+  TaskNode* head = NULL;
+
+  // 创建
+  for(size_t i = 0; i< 3; i++) {
+    TaskNode* task_node = create_task_node(bias_array[i]);
+
+    if(task_node == NULL) {
+      printf("create task node fail");
+    } else {
+      task_node->next = head;
+      head = task_node;
+    }
+  }
+
+  // 遍历
+  TaskNode* current = head;
+
+  while(current != NULL) {
+    printf("current=%d\n", current->task->operation(2, 4, current->task->context));
+
+    current = current->next;
+  }
+
+  // 销毁
+  destroy_task_list(&head);
+
+  // 检查销毁情况
+  printf("destroy task list:%d", head == NULL);
+
+  // 二次销毁
+  destroy_task_list(&head);
+
+  // 检查销毁情况
+  printf("destroy task list:%d", head == NULL);
+
   return EXIT_SUCCESS;
 }
 
@@ -135,7 +235,7 @@ void struct_ptr(void) {
   printf("point.x=%d, point.y=%d\n", point.x, point.y);
   printf("p->x=%d, p->y=%d\n", p->x, p->y);
 
-  printf("p.x=%d,p.y=%d\n", (*p).x, (*p).y);
+  printf("(*p).x=%d,(*p).y=%d\n", (*p).x, (*p).y);
 }
 
 void link_list(void) {
@@ -167,18 +267,98 @@ void link_list(void) {
 }
 
 void heap_node(void) {
-  Node* node = malloc(sizeof *node);
+  Node* node = create_node("heap-node");
 
   if (node == NULL) {
-    printf("malloc failed\n");
+    printf("create node failed\n");
     return;
   }
 
-  node->data = "heap-node";
-  node->next = NULL;
-  printf("node->data=%s, *node=%p\n", (char*)(node->data), (void*)node);
+  printf("node->data=%s, node=%p\n", (char*)(node->data), (void*)node);
 
   free(node);
 
   node = NULL;
+}
+
+Node* create_node(void* data) {
+  Node* node = malloc(sizeof *node);
+
+  if (node == NULL) {
+    printf("malloc failed\n");
+    return NULL;
+  }
+
+  node->data = data;
+  node->next = NULL;
+  return node;
+}
+
+void heap_list(void) {
+  Node* node1 = create_node("node1");
+  Node* node2 = create_node("node2");
+  Node* node3 = create_node("node3");
+
+  Node* check_list[] = {node1, node2, node3};
+
+  for (size_t i = 0; i < sizeof(check_list) / sizeof(check_list[0]); i++) {
+    if (check_list[i] == NULL) {
+      printf("create node failed\n");
+      destroy_list(&node1);
+      destroy_list(&node2);
+      destroy_list(&node3);
+      return;
+    }
+  }
+
+  print_nodes(check_list, 3);
+
+  node1->next = node2;
+  node2->next = node3;
+
+  Node* current = node1;
+
+  // 遍历节点
+  while (current != NULL) {
+    printf("current.data=%s\n", (char*)current->data);
+    current = current->next;
+  }
+
+  // 遍历释放
+  destroy_list(&node1);
+}
+
+void destroy_list(Node** head) {
+  if (*head == NULL) {
+    return;
+  }
+
+  while (*head != NULL) {
+    Node* next = (*head)->next;
+    free(*head);
+    *head = next;
+  }
+}
+
+void print_nodes(Node* node[], size_t size) {
+  for (size_t i = 0; i < size; i++) {
+    printf("node[%zu].data=%s\n", i, (char*)node[i]->data);
+  }
+}
+
+void test_buffer() {
+  char raw[] = {'a', 'b', 'c', 'd', 'e'};
+
+  fwrite(raw, 1, sizeof(raw), stdout);
+  putchar('\n');
+}
+
+int add(int a, int b) { return a + b; }
+
+int calculate(int num1, int num2, int (*operation)(int, int)) { return operation(num1, num2); }
+
+
+
+int calculate_with_context(int num1, int num2, Operation operation, void* context) {
+  return operation(num1, num2, context);
 }

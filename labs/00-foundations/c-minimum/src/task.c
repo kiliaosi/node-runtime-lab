@@ -97,3 +97,35 @@ void destroy_task_list(TaskNode** head) {
 
   *head = NULL;
 }
+
+TaskStatus push_stack(TaskNode** head, Operation operation, int bias) {
+
+  if(head == NULL || operation == NULL) return TASK_ERROR;
+  TaskNode* task_node = create_task_node(bias);
+
+  if(task_node==NULL) {
+    return TASK_ERROR;
+  }
+
+  task_node->task->operation = operation;
+
+  task_node->next = *head;
+
+  *head = task_node;
+
+  return TASK_OK;
+}
+
+void run_tasks(TaskNode* node, int a, int b) {
+  if(node == NULL) return;
+
+  TaskNode* current = node;
+
+  while(current != NULL) {
+    int result = current->task->operation(a, b, current->task->context);
+
+    printf("current node %d , result is %d", *(int *) current->task->context, result);
+
+    current = current->next;
+  }
+}

@@ -5,6 +5,8 @@
 
 接续：[第一部分](F01-c-minimum-part1.md)；课程状态见 [PROGRESS.md](../PROGRESS.md)。
 
+更新说明（2026-10-22）：本文保留 2026-10-21 的学习状态。原计划的 push_task 已以 push_stack 命名实现，run_tasks 与混合回调实验也已完成，F01 已通过本轮验收。最新记录及下一步见 [F01 C 最小集（三）](F01-c-minimum-part3.md)和[课程进度](../PROGRESS.md)。
+
 ## 本次目标与当前边界
 
 把指针、生命周期和回调组合成可创建、执行、清理的任务链表，为 libuv 的回调和 `.data` 建立语言基础。

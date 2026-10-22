@@ -27,5 +27,7 @@ TaskNode* create_task_node(int bias);
 Task* create_task(int bias);
 void destroy_task_node(TaskNode** task_node);
 void destroy_task_list(TaskNode** head);
+TaskStatus push_stack(TaskNode** head, Operation operation, int bias);
+void run_tasks(TaskNode* node, int a, int b);
 
 #endif

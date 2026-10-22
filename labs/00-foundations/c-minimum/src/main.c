@@ -14,6 +14,7 @@ void test_buffer();
 int calculate(int num1, int num2, int (*operation)(int, int));
 int add(int, int);
 int calculate_with_context(int num1, int num2, Operation operation, void* context);
+static int multiply_with_bias(int a, int b, void* context);
 
 
 
@@ -98,28 +99,24 @@ int main(void) {
 
   int bias_array[] = {30, 20, 10};
 
+  Operation operations[] = { add_with_bias, multiply_with_bias, add_with_bias };
+
   TaskNode* head = NULL;
 
   // 创建
   for(size_t i = 0; i< 3; i++) {
-    TaskNode* task_node = create_task_node(bias_array[i]);
 
-    if(task_node == NULL) {
-      printf("create task node fail");
-    } else {
-      task_node->next = head;
-      head = task_node;
+    TaskStatus task_status = push_stack(&head, operations[i], bias_array[i]);
+
+    if(task_status == TASK_ERROR) {
+      printf("cpush task error");
     }
   }
 
   // 遍历
   TaskNode* current = head;
 
-  while(current != NULL) {
-    printf("current=%d\n", current->task->operation(2, 4, current->task->context));
-
-    current = current->next;
-  }
+  run_tasks(current, 2, 4);
 
   // 销毁
   destroy_task_list(&head);
@@ -361,4 +358,11 @@ int calculate(int num1, int num2, int (*operation)(int, int)) { return operation
 
 int calculate_with_context(int num1, int num2, Operation operation, void* context) {
   return operation(num1, num2, context);
+}
+
+
+static int multiply_with_bias(int a, int b, void* context){
+  int bias = *(int*)context;
+
+  return a * b + bias;
 }

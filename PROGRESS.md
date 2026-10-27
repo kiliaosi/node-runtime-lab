@@ -88,17 +88,21 @@ F01 已通过本轮验收。课程要求的 C 最小集主干、综合任务链�
 - 后续巩固：声明、定义、调用保持一致；保存后核对实际编译文件；逐节点预测每次遍历；区分空指针检查与对象是否仍存活。
 - 后续衔接：当日已进入 F02，并完成引用口头练习和首组生命周期/所有权代码实验；最新状态见下方 F02 当前进度。
 
-## F02 当前进度（2026-10-22）
+## F02 当前进度（2026-10-27）
 
-F02 正在进行。引用部分口头检查和对象生命周期、unique_ptr 所有权这一组手写实验已完成；完整 F02 尚未验收。
-笔记见 [F02 C++ 最小集（一）](notes/F02-cpp-minimum-part1.md)，代码与复现步骤见 [C++ 实验](labs/00-foundations/cpp-minimum/README.md)。
+F02 正在进行。引用部分口头练习、四组 Trace 生命周期/unique_ptr 实验及六组真实 File 资源实验已完成；移动赋值已讲解和布置，尚未实现、尚未验收。完整 F02 尚未通过验收。
+笔记见 [第一部分](notes/F02-cpp-minimum-part1.md)和[第二部分](notes/F02-cpp-minimum-part2.md)；代码与复现步骤见 [C++ 实验](labs/00-foundations/cpp-minimum/README.md)。
 
-- 已学习：值复制与引用、引用不能重新绑定、引用形参、指针的引用、const 引用、返回局部变量引用的悬空问题。
-- 已完成代码：Trace 构造/析构日志、test_scope、带提前 return 的 test_unique、test_move、custom_trace 与 test_transfer；main 已接通四组实验。源码采用 src/main.cc，独立 CMake 目标为 f02-lifetime。
-- 已验证：C++20 严格重新构建和运行通过，没有警告，退出 0。局部对象与智能指针在正常离开作用域时清理；test_unique 提前 return 仍析构；移动后 p 为空、q 非空；按值函数参数接管所有权，destroy 在 after call 之前，调用者 item 为空。未执行 sanitizer 或分配失败注入。
-- 关键结论：unique_ptr 默认构造为空，make_unique 才创建动态对象；std::move 本身不创建或销毁 Trace，unique_ptr 的移动构造接管所有权；调用者和形参同名不代表是同一个智能指针对象。
-- 已纠正：结构体分号、命名空间拼写、void 返回值、类型与函数声明顺序、空智能指针误用，以及 main 调用和日志漏写。继续巩固一次核对声明、定义、调用、保存文件与实际输出的习惯。
-- 下一步：手写管理真实 C 资源的 RAII 类，结合成员、构造/析构、资源有效性、失败清理与复制约束。shared_ptr、模板/命名空间、继承/虚函数、lambda/C 回调桥接及 V8 包装类型等仍待继续；尚未手写资源类的移动操作。
+- 已学习并练习：值与引用、const 引用、引用形参和悬空引用；构造/析构、作用域与提前 return 清理；unique_ptr/make_unique、独占所有权移动和函数按值接管。
+- 已完成代码：src/main.cc 的四组 Trace 实验；src/file_raii.cc 的 test_file_scope、test_file_return、test_file_failure、test_file_borrow、test_file_move、test_file_transfer，main 均已接通。
+- File 实现：构造打开 FILE*，valid/write/析构处理空状态，禁止复制；移动构造接管句柄并清空来源。类外 write_message(File&) 借用资源；成员 write_owned(File) 的按值参数接管资源。学生使用 unique_ptr 管理 File，File 再管理文件句柄。
+- 已验证：Rocky Linux / GNU C++ 14.2.1、C++20 严格构建无警告，两程序运行退出 0；五个文件字节内容分别为 normal\n、early\n、borrowed\nowner\n、moved\n、owned\n。strace 记录确认各练习文件打开/关闭一次，transfer 文件在调用后的结果输出之前关闭，打开目录失败后没有关闭无效句柄。
+- 关键区别：移动 unique_ptr 转移同一个 File 对象的管理权；make_unique<File>(std::move(*first)) 创建另一个 File，并移动内部文件资源，两个智能指针本身仍非空。初始化新对象调用移动构造，对已有对象使用 = 才是赋值。
+- 本轮纠正：File 与 File& 用点号访问成员，unique_ptr 用箭头；bool 函数必须显式返回写入结果；输出比较表达式需加括号；保存后核对服务器实际编译的文件。原始日志缺少部分换行和成功打开/关闭输出，验收没有虚构日志。
+- 验证边界：未执行 sanitizer、分配失败注入或故意的 double-free/use-after-free 实验；不将当前测试等同于完整 F02 验收。
+- 续学入口：实现 File& operator=(File&& other) noexcept 和 test_file_move_assign，处理自移动、目标旧资源关闭、接管、来源置空及返回 *this。具体要求见 [File RAII 练习](labs/00-foundations/cpp-minimum/FILE_RAII.md)。
+- 后续主题：shared_ptr 所有权差异、模板/命名空间、继承/虚函数的阅读、lambda 与 C 回调桥接、V8 常见包装类型，以及课程规定的资源错误复现与修复实验。
+- 终端复现：VS Code Remote SSH 中按 F1 → Tasks: Run Task → F02: build and run File RAII，编译失败不会运行旧程序；当前 Ctrl+Shift+B 与搜狗输入法冲突。
 
 ## 训练日志
 
@@ -113,3 +117,4 @@ F02 正在进行。引用部分口头检查和对象生命周期、unique_ptr �
 | 2026-10-21 | F01 进行中 | 补齐动态链表、缓冲区、回调/context、多文件 Task 模块、头插任务链表与 TaskStatus；严格重建和相关内存计数检查通过；完成 static 与 ABI 口头检查 | 明确释放对象不等于清空指针、局部 current 不等于调用者 head；接受头插与单项失败跳过的设计选择；独立自查仍需巩固 | 实现 push_task 注册可选择的回调，保留头插和失败跳过策略，再进行综合验收 |
 | 2026-10-22 | F01 通过验收 | 完成 push_stack、Operation 数组、static 乘法回调及 run_tasks；严格重建与混合回调运行通过；注册失败路径和口头综合检查通过；补齐第三部分笔记 | 纠正悬空别名及综合题漏算；声明/定义/调用一致性和独立自查仍需巩固 | 进入 F02，从值复制与引用开始，再学习生命周期与 RAII |
 | 2026-10-22 | F02 进行中 | 完成引用口头练习及 Trace、作用域/提前 return 清理、unique_ptr 移动和函数接管所有权四组实验；C++20 严格重建与输出核对通过；新增第一部分笔记 | 纠正默认空智能指针、声明顺序及调用/日志漏写；区分智能指针变量、动态对象与所有权 | 手写管理真实 C 资源的 RAII 类，明确复制约束与失败清理 |
+| 2026-10-27 | F02 进行中 | 完成六组 File RAII 实验、借用、移动构造及按值参数接管；严格构建、五个文件字节和资源关闭顺序通过核对；新增第二部分笔记和可见终端任务 | 巩固对象/引用/智能指针的成员访问、显式返回值、保存后的实际源文件；右值引用和赋值运算符重载已讲解 | 实现并验证 File 移动赋值，随后继续 shared_ptr 等 F02 剩余内容 |

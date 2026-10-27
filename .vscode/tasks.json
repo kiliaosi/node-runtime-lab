@@ -1,0 +1,62 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "F02: build and run File RAII",
+      "type": "process",
+      "command": "/bin/bash",
+      "args": [
+        "-lc",
+        "source scripts/activate-lab.sh && cmake -S labs/00-foundations/cpp-minimum -B build/f02-cpp-minimum -DCMAKE_BUILD_TYPE=Debug && cmake --build build/f02-cpp-minimum --target f02-file-raii && ./build/f02-cpp-minimum/f02-file-raii"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated",
+        "clear": true,
+        "echo": true,
+        "showReuseMessage": true
+      },
+      "runOptions": {
+        "instanceLimit": 1
+      }
+    },
+    {
+      "label": "F02: build and run lifetime",
+      "type": "process",
+      "command": "/bin/bash",
+      "args": [
+        "-lc",
+        "source scripts/activate-lab.sh && cmake -S labs/00-foundations/cpp-minimum -B build/f02-cpp-minimum -DCMAKE_BUILD_TYPE=Debug && cmake --build build/f02-cpp-minimum --target f02-lifetime && ./build/f02-cpp-minimum/f02-lifetime"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated",
+        "clear": true,
+        "echo": true,
+        "showReuseMessage": true
+      },
+      "runOptions": {
+        "instanceLimit": 1
+      }
+    }
+  ]
+}

@@ -88,21 +88,21 @@ F01 已通过本轮验收。课程要求的 C 最小集主干、综合任务链�
 - 后续巩固：声明、定义、调用保持一致；保存后核对实际编译文件；逐节点预测每次遍历；区分空指针检查与对象是否仍存活。
 - 后续衔接：当日已进入 F02，并完成引用口头练习和首组生命周期/所有权代码实验；最新状态见下方 F02 当前进度。
 
-## F02 当前进度（2026-10-27）
+## F02 当前进度（2026-10-29）
 
-F02 正在进行。引用部分口头练习、四组 Trace 生命周期/unique_ptr 实验及六组真实 File 资源实验已完成；移动赋值已讲解和布置，尚未实现、尚未验收。完整 F02 尚未通过验收。
-笔记见 [第一部分](notes/F02-cpp-minimum-part1.md)和[第二部分](notes/F02-cpp-minimum-part2.md)；代码与复现步骤见 [C++ 实验](labs/00-foundations/cpp-minimum/README.md)。
+F02 正在进行。引用、RAII、移动语义、智能指针、基础模板、继承/多态和 lambda 值/引用捕获已完成本阶段练习；完整 F02 尚未通过验收。
+笔记见 [第一部分](notes/F02-cpp-minimum-part1.md)、[第二部分](notes/F02-cpp-minimum-part2.md)和[第三部分](notes/F02-cpp-minimum-part3.md)。
 
-- 已学习并练习：值与引用、const 引用、引用形参和悬空引用；构造/析构、作用域与提前 return 清理；unique_ptr/make_unique、独占所有权移动和函数按值接管。
-- 已完成代码：src/main.cc 的四组 Trace 实验；src/file_raii.cc 的 test_file_scope、test_file_return、test_file_failure、test_file_borrow、test_file_move、test_file_transfer，main 均已接通。
-- File 实现：构造打开 FILE*，valid/write/析构处理空状态，禁止复制；移动构造接管句柄并清空来源。类外 write_message(File&) 借用资源；成员 write_owned(File) 的按值参数接管资源。学生使用 unique_ptr 管理 File，File 再管理文件句柄。
-- 已验证：Rocky Linux / GNU C++ 14.2.1、C++20 严格构建无警告，两程序运行退出 0；五个文件字节内容分别为 normal\n、early\n、borrowed\nowner\n、moved\n、owned\n。strace 记录确认各练习文件打开/关闭一次，transfer 文件在调用后的结果输出之前关闭，打开目录失败后没有关闭无效句柄。
-- 关键区别：移动 unique_ptr 转移同一个 File 对象的管理权；make_unique<File>(std::move(*first)) 创建另一个 File，并移动内部文件资源，两个智能指针本身仍非空。初始化新对象调用移动构造，对已有对象使用 = 才是赋值。
-- 本轮纠正：File 与 File& 用点号访问成员，unique_ptr 用箭头；bool 函数必须显式返回写入结果；输出比较表达式需加括号；保存后核对服务器实际编译的文件。原始日志缺少部分换行和成功打开/关闭输出，验收没有虚构日志。
-- 验证边界：未执行 sanitizer、分配失败注入或故意的 double-free/use-after-free 实验；不将当前测试等同于完整 F02 验收。
-- 续学入口：实现 File& operator=(File&& other) noexcept 和 test_file_move_assign，处理自移动、目标旧资源关闭、接管、来源置空及返回 *this。具体要求见 [File RAII 练习](labs/00-foundations/cpp-minimum/FILE_RAII.md)。
-- 后续主题：shared_ptr 所有权差异、模板/命名空间、继承/虚函数的阅读、lambda 与 C 回调桥接、V8 常见包装类型，以及课程规定的资源错误复现与修复实验。
-- 终端复现：VS Code Remote SSH 中按 F1 → Tasks: Run Task → F02: build and run File RAII，编译失败不会运行旧程序；当前 Ctrl+Shift+B 与搜狗输入法冲突。
+- 已完成代码：main.cc 的四组 Trace 实验、shared_ptr、函数模板、类模板、抽象类多态、虚析构与智能指针、lambda 及捕获；file_raii.cc 的七组 File 实验，包括移动赋值。
+- 移动赋值：使用 *target = std::move(*source) 移动两个 File 对象之间的资源；两个 unique_ptr 本身保持非空。旧文件为 old\n，新文件为 before\nafter\n，输出目标有效 1、来源有效 0、写入成功 1。自移动分支已检查源码，未单独运行自移动实验。
+- 智能指针与模板：shared_ptr 的复制增加共同所有权，p.reset() 后 p 为空且计数为 0，q 继续持有对象；larger 输出 7、2.5、8，ValueBox 输出 10、2.5、20。已解释 explicit、成员初始化列表和 const 成员函数。
+- 多态：Operation::run 为纯虚函数；AddOperation/MultiplyOperation 提供 const override 实现；calculate(const Operation&) 输入 2、4，输出 6、8。unique_ptr<Operation> 管理 MultiplyOperation，输入 3、4 输出 12，销毁时先派生类析构、后基类析构，再输出 after owner scope。
+- lambda：无捕获 add/multiply 输入 4、5，输出 9、20；num=10 时创建引用捕获和值捕获，改成 20 后先调用引用捕获、再调用值捕获，输出 29、19。捕获练习直接写在 test_lambda 中。
+- 验证记录：以上结果来自课堂实际构建/运行，使用 GNU C++ 14.2.1、C++20 和严格警告选项；此前 File 文件字节与 strace 关闭记录通过。2026-10-29 下班提交按用户要求不重复编译或运行，不把本次保存描述成新的测试。
+- 续学入口：刚布置无捕获 lambda 到函数指针的转换，尚未实现/验收。在 test_lambda 的 add 定义后添加 int (*callback)(int, int) = add，并输出 callback(4, 5)，预期 9。
+- 后续主题：lambda 与 C 回调/context 桥接、V8 Local<T>/Maybe/MaybeLocal 阅读、故意 double-free/use-after-free 的定位修复及 F02 综合验收。
+- 验证边界：未运行本阶段 sanitizer、分配失败注入或故意的 double-free/use-after-free 实验。内容覆盖估计不作为掌握程度评分。
+- 终端入口：F1 → Tasks: Run Task → F02: build and run lifetime 或 F02: build and run File RAII。
 
 ## 训练日志
 
@@ -118,3 +118,5 @@ F02 正在进行。引用部分口头练习、四组 Trace 生命周期/unique_p
 | 2026-10-22 | F01 通过验收 | 完成 push_stack、Operation 数组、static 乘法回调及 run_tasks；严格重建与混合回调运行通过；注册失败路径和口头综合检查通过；补齐第三部分笔记 | 纠正悬空别名及综合题漏算；声明/定义/调用一致性和独立自查仍需巩固 | 进入 F02，从值复制与引用开始，再学习生命周期与 RAII |
 | 2026-10-22 | F02 进行中 | 完成引用口头练习及 Trace、作用域/提前 return 清理、unique_ptr 移动和函数接管所有权四组实验；C++20 严格重建与输出核对通过；新增第一部分笔记 | 纠正默认空智能指针、声明顺序及调用/日志漏写；区分智能指针变量、动态对象与所有权 | 手写管理真实 C 资源的 RAII 类，明确复制约束与失败清理 |
 | 2026-10-27 | F02 进行中 | 完成六组 File RAII 实验、借用、移动构造及按值参数接管；严格构建、五个文件字节和资源关闭顺序通过核对；新增第二部分笔记和可见终端任务 | 巩固对象/引用/智能指针的成员访问、显式返回值、保存后的实际源文件；右值引用和赋值运算符重载已讲解 | 实现并验证 File 移动赋值，随后继续 shared_ptr 等 F02 剩余内容 |
+
+| 2026-10-29 | F02 进行中 | 完成 File 移动赋值、shared_ptr、函数/类模板、抽象类多态与虚析构、lambda 值/引用捕获；新增第三部分笔记 | 区分移动指针与移动对象、const 成员函数、纯虚接口及捕获时机；下班提交按用户要求不重新运行验证 | 无捕获 lambda 转函数指针，随后 C 回调/context 桥接 |

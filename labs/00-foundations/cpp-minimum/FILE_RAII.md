@@ -1,8 +1,8 @@
 # F02 练习二：用 File 管理真实文件资源
 
 开始日期：2026-10-23
-更新日期：2026-10-27
-状态：六组 File 实验已通过验证；移动赋值待实现，F02 整体未完成。
+更新日期：2026-10-29
+状态：七组 File 实验已在课堂验证，含移动赋值；F02 整体未完成。
 
 源码：[src/file_raii.cc](src/file_raii.cc)；
 构建、实际输出与文件内容见 [README](README.md)；
@@ -24,6 +24,7 @@ bool write(const char* text);
 File(File&& other) noexcept;
 File(const File&) = delete;
 File& operator=(const File&) = delete;
+File& operator=(File&& other) noexcept;
 bool write_owned(File file);
 ```
 
@@ -32,7 +33,7 @@ bool write_owned(File file);
 - valid() const 不改变对象的资源状态。
 - 两个 = delete 禁止复制，避免两个对象同时负责关闭同一个句柄。
 - 移动构造接管 other.file_ 并把它置空；不会再次打开文件。
-- 当前尚未实现移动赋值。
+- 移动赋值先处理目标旧资源，再接管来源并清空来源。
 
 ## 使用的 C 文件接口
 
@@ -59,7 +60,7 @@ FILE* 使用 fclose 关闭，不使用 free 或 delete。调用 fclose 后不再
 初始任务建议通过 open/close 日志观察生命周期；当前源码没有这些成功日志，部分输出也未换行。
 本轮按实际源码、输出、文件字节和 strace 的打开/写入/关闭顺序完成验证，没有把最初的预期日志当成运行结果。
 
-## 六个测试及验收点
+## 七个测试及验收点
 
 | 测试 | 验收点 |
 | --- | --- |
@@ -69,53 +70,52 @@ FILE* 使用 fclose 关闭，不使用 free 或 delete。调用 fclose 后不再
 | test_file_borrow | write_message(File&) 写入 borrowed\n 后，所有者继续写 owner\n |
 | test_file_move | make_unique<File>(std::move(*first)) 调用 File 移动构造；两次 valid 和写入结果为 0、1、1 |
 | test_file_transfer | file->write_owned(std::move(*file)) 接管资源；结果、外层指针非空、内部有效性为 1、1、0 |
+| test_file_move_assign | *target = std::move(*source)；目标/来源 valid 和继续写入结果为 1、0、1 |
 
 write_message 是类外函数，参数 File& 使用点号访问成员。
 write_owned 当前是 File 的成员函数，但其按值形参仍是独立的 File 对象，使用点号访问成员。
 test_file_transfer 中的 file 则是智能指针，通过箭头访问它管理的 File。
 
-六个测试均已在 main 中调用。输出、生成文件和构建步骤以 README 为准。
+七个测试均已在 main 中调用。输出、生成文件和构建步骤以 README 为准。
 
-## 下一步：移动赋值（待完成）
+## 移动赋值（已完成）
 
-本题让一个已经存在的 File 关闭旧文件，再接管另一个 File 的资源。
-添加以下 public 成员函数，保留已有的禁止复制声明：
-
-```cpp
-File& operator=(File&& other) noexcept {
-  // 学生自行实现
-}
-```
-
-在 target = std::move(source) 中，this 指向 target，other 引用 source。
-该表达式可以理解为调用 target.operator=(std::move(source))。
-
-实现要求：
-
-1. this == &other 时直接返回 *this，保留自移动时原来的资源。
-2. 若自身 file_ 非空，先关闭自己原来的文件。
-3. 接管 other.file_，随后把 other.file_ 置为 nullptr。
-4. 返回 *this。赋值函数按惯例返回目标对象的引用。
-
-直接覆盖旧的 file_ 会丢失旧文件句柄，造成资源泄漏。
-先创建 target，再执行赋值；auto target = std::move(source) 是初始化新对象，会调用移动构造。
-
-新增 test_file_move_assign()，直接使用局部 File：
+已实现接口：
 
 ```cpp
-File target("build/f02-cpp-minimum/raii-assign-old.txt");
-File source("build/f02-cpp-minimum/raii-assign-new.txt");
+File& operator=(File&& other) noexcept;
 ```
 
-测试流程：
+实现先检查 this == &other；若自身有资源则关闭旧流，再接管 other.file_，
+把来源置为 nullptr，并返回 *this。自移动保护已检查源码，本轮未单独运行自移动场景。
 
-1. 检查两个文件打开成功。
-2. target 写 old\n，source 写 before\n，每次检查写入结果。
-3. 执行 target = std::move(source)。
-4. 输出 target.valid() 和 source.valid()，预期 1、0。
-5. target 写 after\n，并检查写入结果。
-6. 补齐函数声明与 main 调用。
+当前学生测试使用两个 unique_ptr<File>：
 
-预期旧文件内容 old\n，新文件内容 before\nafter\n。
-旧文件在移动赋值时关闭，新文件由 target 在析构时关闭。
-这些是下一步的验收要求，当前尚未实现或运行验证。
+```cpp
+std::unique_ptr<File> target =
+    std::make_unique<File>("build/f02-cpp-minimum/raii-assign-old.txt");
+std::unique_ptr<File> source =
+    std::make_unique<File>("build/f02-cpp-minimum/raii-assign-new.txt");
+```
+
+检查打开成功后，target 写 old\n，source 写 before\n，然后执行：
+
+```cpp
+*target = std::move(*source);
+```
+
+这是对已存在 File 的移动赋值。target/source 仍管理各自原来的 File 对象，
+资源从 source 内部转交给 target；来源 File 为空，但 source 智能指针仍非空。
+
+直接写 target = std::move(source) 则转移 unique_ptr 自己的所有权，source 会变为空指针。
+本轮曾在这种错误写法后调用 source->valid() 并观察到 SIGSEGV，随后改为移动 File 并验证成功。
+这次错误不是 double-free/use-after-free 实验，也不能替代课程规定的资源错误验收。
+
+测试结果：target->valid() 为 1、source->valid() 为 0、目标继续写 after\n 成功为 1。
+旧文件内容为 old\n，新文件内容为 before\nafter\n。
+此前课堂 strace 确认旧流在赋值过程中关闭，新流由接管后的目标对象关闭，各关闭一次。
+
+初始化新对象（如 File target = std::move(source)）使用移动构造；
+对已存在对象执行赋值才调用移动赋值运算符。
+
+2026-10-29 下班提交按用户要求不重复构建或运行。后续课程入口见 [README](README.md#下次从这里继续)。

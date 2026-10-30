@@ -3,6 +3,8 @@
 #include <memory>
 #include <utility>
 
+typedef int (*ContextCallback)(int, int, void*);
+
 void test_scope();
 void test_unique();
 void test_move();
@@ -13,6 +15,8 @@ void test_class_template();
 void test_polymorphism();
 void test_polymorphic_owner();
 void test_lambda();
+void test_context_callback();
+
 struct Trace {
   Trace() { std::puts("create"); }
 
@@ -89,6 +93,8 @@ int main() {
 
   std::puts("test_lambda");
   test_lambda();
+
+  test_context_callback();
 }
 
 void test_scope() {
@@ -215,4 +221,47 @@ void test_lambda() {
 
   std::cout << by_ref(4, 5) << std::endl;
   std::cout << by_value(4, 5) << std::endl;
+
+  // 无捕获lambda转函数指针
+
+  int (*callback)(int, int) = add;
+
+  std::cout << callback(2, 4) << std::endl;
+}
+
+int invoke_callback(ContextCallback callback, void* context, int a, int b) {
+  return callback(a, b, context);
+}
+
+void test_context_callback() {
+  int bias = 10;
+
+  ContextCallback callback = [](int a, int b, void* context) {
+    int* value = static_cast<int*>(context);
+
+    return a + b + *value;
+  };
+
+  int result = invoke_callback(callback, &bias, 2, 4);
+
+  std::cout << result << std::endl;
+
+  bias = 20;
+
+  int result2 = invoke_callback(callback, &bias, 2, 4);
+
+  std::cout << result2 << std::endl;
+
+  // 测试
+  auto work = [bias](int a, int b) { return a + b + bias; };
+
+  typedef decltype(work) WorkType;
+
+  ContextCallback bridge = [](int a, int b, void* context) {
+    WorkType* local_work = static_cast<WorkType*>(context);
+
+    return (*local_work)(a, b);
+  };
+
+  std::cout << invoke_callback(bridge, &work, 2, 4) << std::endl;
 }

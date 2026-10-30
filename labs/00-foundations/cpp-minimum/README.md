@@ -167,5 +167,10 @@ Ctrl+Shift+B 在当前机器与搜狗输入法冲突，使用 F1 入口。
 ## 下次从这里继续
 
 两项资源故障修复已完成，过程与日志见 [MEMORY_RAII.md](MEMORY_RAII.md)。
-下一步用已有代码做短综合验收：解释资源的所有者与借用者、析构和最后一次访问的顺序、回调 context 的类型与生命周期，以及 Maybe/MaybeLocal 的失败处理。
-F02 整体仍在进行中，尚未标记通过综合验收。
+当前保存点：src/main.cc 末尾只有 test_owned_callback 空函数，尚未实现、添加前置声明或接入 main，此练习尚未验证。
+
+1. 补全 test_owned_callback：unique_ptr<Operation> 管理 MultiplyOperation，取得借用指针后移动所有权，再通过无捕获回调与 void* context 调用 run。具体要求和预期输出见[第四部分笔记末尾](../../../notes/F02-cpp-minimum-part4.md)。
+2. 补上声明和 main 调用，运行 F02: build and run lifetime，核对结果与析构顺序。
+3. 简短核对 Maybe/MaybeLocal 的失败处理及 Local 句柄生命周期。
+
+完成以上验收后结束 F02，进入 F03 操作系统运行时最小集；当前 F02 保持进行中。

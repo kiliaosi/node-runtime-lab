@@ -163,5 +163,31 @@ free 0x4da4c80
 - [use-after-free 修复前](../build/f02-cpp-minimum/valgrind-use-after-free-before-fix.log)和[修复后](../build/f02-cpp-minimum/valgrind-use-after-free-after-fix.log)。
 
 这些结果来自课堂已完成的运行，本次更新文档没有重新执行测试，也没有运行 ASan/UBSan。
-下一步是已有代码上的短综合验收：解释所有权与借用/析构顺序、回调 context 的类型和生命周期、Maybe/MaybeLocal 失败行为与 Local 有效期。
-F02 保持进行中，尚未标记整体通过。
+下一步综合验收的具体任务见第10节。F02 保持进行中，尚未标记整体通过。
+
+## 10. 下班保存点：最后一项综合编码练习
+
+当前 src/main.cc 末尾已保存 `void test_owned_callback(){}` 空函数，尚未实现、添加前置声明或接入 main。本次提交保存学习断点，没有编译或运行这个新练习。
+
+回家后补全 test_owned_callback，复用现有 Operation、MultiplyOperation、ContextCallback 和 invoke_callback：
+
+1. 创建 `std::unique_ptr<Operation> first`，用 make_unique 创建它管理的 MultiplyOperation 对象。
+2. 保存 `Operation* borrowed = first.get();`。get() 返回借用指针，不转移所有权。
+3. 定义无捕获的 ContextCallback callback，将 void* context 恢复为 Operation*，通过它调用 run(a, b)。
+4. 将 first 的所有权移动给 `std::unique_ptr<Operation> second`，输出 first 是否为空。
+5. 在 second 仍存活时调用 `invoke_callback(callback, borrowed, 3, 4)` 并打印结果；函数结束时由 second 自动清理对象。
+
+实现放在文件末尾，文件开头补声明，并在 main 中添加调用。可通过 F1 → Tasks: Run Task → F02: build and run lifetime 查看控制台输出。
+
+这组练习的**预期输出（尚未实测）**：
+
+```text
+first empty: 1
+result: 12
+MultiplyOperation destroy
+Operation destroy
+```
+
+核对重点：first 为空后 borrowed 为什么仍能用于此处的同步回调；资源由谁持有，何时释放。
+
+这是 F02 最后一项综合编码练习。实现并通过检查后，再简短核对 Maybe/MaybeLocal 的失败处理和 Local 句柄生命周期，即可完成 F02 验收，进入 F03 操作系统运行时最小集。

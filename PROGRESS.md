@@ -104,7 +104,8 @@ V8 Maybe/空局部句柄实验与 HandleScope/持久句柄阅读已推进；doub
 - 内存故障历史：助手提供独立 memory_raii.cc 故障教材；默认浅拷贝导致同地址二次释放，Valgrind 3.26.0 已复现 Invalid free、ERROR SUMMARY 1、退出 99；释放后读取也已复现并保留修复前日志。没有泄漏不代表没有内存错误。
 - 两项修复已验证：删除 Buffer 的复制构造/赋值，second 改为 Buffer& 借用；将 UAF 案例的 owner 声明放到函数外层，使 saved 最后一次读取先于 owner 析构。double-free、use-after-free 两个修复版均 ERROR SUMMARY 0、无泄漏、退出 0。当前源码已修复，错误示例作为历史材料保留。
 - 本机证据：build/f02-cpp-minimum/valgrind-double-free-after-fix.log 与 valgrind-use-after-free-after-fix.log；UAF 输出 borrowed value: 42 后才出现 free 地址日志。
-- 续学入口：用已有代码完成短综合验收，说明所有者/借用者与释放顺序、回调 context 的类型和有效期，以及 Maybe/MaybeLocal 的失败输出行为与 Local 句柄有效期；不要求重新搭建一套工程。
+- 下班保存点：main.cc 末尾已建立 test_owned_callback 空函数，尚未实现、添加前置声明或接入 main，也未验证此练习。
+- 续学入口：补全最后一项综合编码练习，将 unique_ptr 所有权移动、多态和 void* 回调借用串起来，要求见[第四部分笔记](notes/F02-cpp-minimum-part4.md)。实现并通过运行检查后，再简短核对 Maybe/MaybeLocal 失败处理与 Local 句柄有效期；两项通过后完成 F02，进入 F03 操作系统运行时最小集。
 - 当前边界：资源错误两项修复已通过课堂检查，F02 综合验收尚未完成。ASan/UBSan 库缺失，未执行；独立自移动、分配失败注入仍未覆盖。V8 仍是包装类型与生命周期入门，没有初始化引擎或实测 GC。
 - 提交记录：修复代码独立提交；本次文档记录已取得的课堂证据，不重复运行测试，F02 保持进行中。
 
@@ -125,3 +126,4 @@ V8 Maybe/空局部句柄实验与 HandleScope/持久句柄阅读已推进；doub
 | 2026-10-29 | F02 进行中 | 完成 File 移动赋值、shared_ptr、函数/类模板、抽象类多态与虚析构、lambda 值/引用捕获；新增第三部分笔记 | 区分移动指针与移动对象、const 成员函数、纯虚接口及捕获时机；下班提交按用户要求不重新运行验证 | 无捕获 lambda 转函数指针，随后 C 回调/context 桥接 |
 | 2026-10-30 | F02 进行中 | 完成 lambda 函数指针/context/闭包对象桥接；V8 Maybe 与空句柄实验；用 Valgrind 复现默认浅拷贝导致的 double-free | 区分 Maybe/MaybeLocal 输出约定、句柄与 GC 对象生命周期，以及无泄漏与无内存错误 | 先修 double-free，再复现并修复 use-after-free，随后综合验收 |
 | 2026-10-30 | F02 资源错误修复 | 禁止 Buffer 复制并改为引用借用；UAF 的 owner 外移，保证最后一次读取早于析构；两条修复路径 Valgrind 均 0 错误、无泄漏、退出 0，保留修复前日志 | 非空借用指针仍可能悬空；引用不是新增资源所有者；无泄漏与无非法访问是不同检查 | 基于已有代码完成 F02 短综合验收，暂不标整阶段通过 |
+| 2026-10-30 | F02 下班保存点 | 保存 test_owned_callback 空函数和综合练习要求，函数体、前置声明、main 调用尚待补齐；此次未编译或运行新练习 | 借用指针应在新所有者 second 存活期间使用；预期输出尚非实测结果 | 回家补全综合练习并验证，再核对 V8 失败处理与句柄生命周期，完成 F02 后进入 F03 |

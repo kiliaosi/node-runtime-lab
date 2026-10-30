@@ -88,21 +88,23 @@ F01 已通过本轮验收。课程要求的 C 最小集主干、综合任务链�
 - 后续巩固：声明、定义、调用保持一致；保存后核对实际编译文件；逐节点预测每次遍历；区分空指针检查与对象是否仍存活。
 - 后续衔接：当日已进入 F02，并完成引用口头练习和首组生命周期/所有权代码实验；最新状态见下方 F02 当前进度。
 
-## F02 当前进度（2026-10-29）
+## F02 当前进度（2026-10-30）
 
-F02 正在进行。引用、RAII、移动语义、智能指针、基础模板、继承/多态和 lambda 值/引用捕获已完成本阶段练习；完整 F02 尚未通过验收。
-笔记见 [第一部分](notes/F02-cpp-minimum-part1.md)、[第二部分](notes/F02-cpp-minimum-part2.md)和[第三部分](notes/F02-cpp-minimum-part3.md)。
+F02 正在进行。RAII/移动语义、智能指针、基础模板、多态、lambda 与 C 风格回调桥接已完成对应课堂练习；
+V8 Maybe/空局部句柄实验与 HandleScope/持久句柄阅读已推进；资源错误修复和综合验收仍待完成。
 
-- 已完成代码：main.cc 的四组 Trace 实验、shared_ptr、函数模板、类模板、抽象类多态、虚析构与智能指针、lambda 及捕获；file_raii.cc 的七组 File 实验，包括移动赋值。
-- 移动赋值：使用 *target = std::move(*source) 移动两个 File 对象之间的资源；两个 unique_ptr 本身保持非空。旧文件为 old\n，新文件为 before\nafter\n，输出目标有效 1、来源有效 0、写入成功 1。自移动分支已检查源码，未单独运行自移动实验。
-- 智能指针与模板：shared_ptr 的复制增加共同所有权，p.reset() 后 p 为空且计数为 0，q 继续持有对象；larger 输出 7、2.5、8，ValueBox 输出 10、2.5、20。已解释 explicit、成员初始化列表和 const 成员函数。
-- 多态：Operation::run 为纯虚函数；AddOperation/MultiplyOperation 提供 const override 实现；calculate(const Operation&) 输入 2、4，输出 6、8。unique_ptr<Operation> 管理 MultiplyOperation，输入 3、4 输出 12，销毁时先派生类析构、后基类析构，再输出 after owner scope。
-- lambda：无捕获 add/multiply 输入 4、5，输出 9、20；num=10 时创建引用捕获和值捕获，改成 20 后先调用引用捕获、再调用值捕获，输出 29、19。捕获练习直接写在 test_lambda 中。
-- 验证记录：以上结果来自课堂实际构建/运行，使用 GNU C++ 14.2.1、C++20 和严格警告选项；此前 File 文件字节与 strace 关闭记录通过。2026-10-29 下班提交按用户要求不重复编译或运行，不把本次保存描述成新的测试。
-- 续学入口：刚布置无捕获 lambda 到函数指针的转换，尚未实现/验收。在 test_lambda 的 add 定义后添加 int (*callback)(int, int) = add，并输出 callback(4, 5)，预期 9。
-- 后续主题：lambda 与 C 回调/context 桥接、V8 Local<T>/Maybe/MaybeLocal 阅读、故意 double-free/use-after-free 的定位修复及 F02 综合验收。
-- 验证边界：未运行本阶段 sanitizer、分配失败注入或故意的 double-free/use-after-free 实验。内容覆盖估计不作为掌握程度评分。
-- 终端入口：F1 → Tasks: Run Task → F02: build and run lifetime 或 F02: build and run File RAII。
+笔记：[第一部分](notes/F02-cpp-minimum-part1.md)、[第二部分](notes/F02-cpp-minimum-part2.md)、
+[第三部分](notes/F02-cpp-minimum-part3.md)、[第四部分](notes/F02-cpp-minimum-part4.md)。
+实验入口见 [README](labs/00-foundations/cpp-minimum/README.md)。
+
+- 保留成果：File 七组实验，包括 *target = std::move(*source) 的移动赋值；main.cc 的 shared_ptr、函数/类模板、抽象类多态及虚析构等实验。
+- 本轮回调：无捕获 add 转函数指针，调用 2、4 得到 6；void* context 借用 int bias，先后得到 16、26。带捕获 work 在 bias=20 时创建，再通过无捕获 bridge 和 &work 调用，结果为 26。桥接代码在 test_context_callback 内，不是独立 test_lambda_bridge。
+- 本轮 V8：使用 Node 24.20.0 的真实头文件完成 Maybe<int> 的 IsJust/FromMaybe/To；empty.To 失败后保留重置的 -99。test_maybe_local 使用默认空 Local<String>/MaybeLocal<String>，仅打印 ToLocal 失败返回值 0。
+- 阅读范围：Local/MaybeLocal 的状态与转换；Maybe::To 和 MaybeLocal::ToLocal 的失败输出约定不同；HandleScope 管理局部句柄有效期，JS 对象由 V8 GC 管理；有效持久强句柄保活对象。没有初始化 V8 引擎、创建真实 JS 字符串或实测 GC。
+- 内存故障：助手提供独立 memory_raii.cc 故障教材；Buffer 默认浅拷贝后两次释放相同地址。Valgrind 3.26.0 已复现 Invalid free、ERROR SUMMARY 1，并确认退出码 99。没有泄漏不代表没有内存错误。
+- 续学入口：修复 double-free，将 Buffer 的复制操作设为 = delete，内层改为引用借用；再验证仅释放一次、Valgrind 无错误。随后运行并修复 use-after-free，再进行综合验收。
+- 当前边界：double-free 尚未修复；use-after-free 模式仅已准备、尚未运行或修复。ASan/UBSan 库缺失，未执行；独立自移动、分配失败注入仍未覆盖。F02 未通过整体验收。
+- 提交记录：本次按功能拆分提交，沿用此前课堂运行证据，不重复执行全套实验。
 
 ## 训练日志
 
@@ -120,3 +122,5 @@ F02 正在进行。引用、RAII、移动语义、智能指针、基础模板、
 | 2026-10-27 | F02 进行中 | 完成六组 File RAII 实验、借用、移动构造及按值参数接管；严格构建、五个文件字节和资源关闭顺序通过核对；新增第二部分笔记和可见终端任务 | 巩固对象/引用/智能指针的成员访问、显式返回值、保存后的实际源文件；右值引用和赋值运算符重载已讲解 | 实现并验证 File 移动赋值，随后继续 shared_ptr 等 F02 剩余内容 |
 
 | 2026-10-29 | F02 进行中 | 完成 File 移动赋值、shared_ptr、函数/类模板、抽象类多态与虚析构、lambda 值/引用捕获；新增第三部分笔记 | 区分移动指针与移动对象、const 成员函数、纯虚接口及捕获时机；下班提交按用户要求不重新运行验证 | 无捕获 lambda 转函数指针，随后 C 回调/context 桥接 |
+
+| 2026-10-30 | F02 进行中 | 完成 lambda 函数指针/context/闭包对象桥接；V8 Maybe 与空句柄实验；用 Valgrind 复现默认浅拷贝导致的 double-free | 区分 Maybe/MaybeLocal 输出约定、句柄与 GC 对象生命周期，以及无泄漏与无内存错误 | 先修 double-free，再复现并修复 use-after-free，随后综合验收 |

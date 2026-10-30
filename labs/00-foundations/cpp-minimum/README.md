@@ -1,10 +1,10 @@
 # F02 C++ 最小集：资源、所有权、模板与多态
 
-更新日期：2026-10-29
-状态：main.cc 的十组实验和 file_raii.cc 的七组实验已在课堂验证；F02 整体仍在进行中。
+更新日期：2026-10-30
+状态：main.cc 的十一组实验和 file_raii.cc 的七组实验已在课堂验证；新增 V8 包装类型练习和待修复的内存故障教材，F02 整体仍在进行中。
 
 课程范围见 [CURRICULUM.md](../../../docs/CURRICULUM.md)，总进度见 [PROGRESS.md](../../../PROGRESS.md)。
-笔记：[引用与 unique_ptr](../../../notes/F02-cpp-minimum-part1.md)、[File RAII](../../../notes/F02-cpp-minimum-part2.md)、[移动赋值到 lambda 捕获](../../../notes/F02-cpp-minimum-part3.md)。
+笔记：[引用与 unique_ptr](../../../notes/F02-cpp-minimum-part1.md)、[File RAII](../../../notes/F02-cpp-minimum-part2.md)、[移动赋值到 lambda 捕获](../../../notes/F02-cpp-minimum-part3.md)、[回调桥接与 V8 类型](../../../notes/F02-cpp-minimum-part4.md)。
 
 ## 生命周期、模板、多态与 lambda
 
@@ -21,11 +21,12 @@
 | test_class_template | ValueBox<int>/float 输出 10、2.5、20 |
 | test_polymorphism | 通过 const Operation& 调用 AddOperation/MultiplyOperation，输出 6、8 |
 | test_polymorphic_owner | unique_ptr<Operation> 持有 MultiplyOperation，输出 12，先派生析构、后基类析构 |
-| test_lambda | 无捕获输出 9、20；修改 num 后引用捕获输出 29，值捕获输出 19 |
+| test_lambda | 无捕获输出 9、20；捕获输出 29、19；函数指针调用输出 6 |
+| test_context_callback | int context 输出 16、26；闭包对象 context 输出 26 |
 
 Operation 是抽象类，run 为纯虚函数，析构为虚函数。
 MultiplyOperation 的析构使用 override。ValueBox 构造函数使用 explicit 和成员初始化列表。
-捕获部分直接写在 test_lambda 中；无单独的 test_capture 函数。
+捕获部分直接写在 test_lambda 中；闭包对象桥接写在 test_context_callback 中。
 
 main.cc 新增部分的实际输出如下，早期四组 Trace 输出见第一部分笔记：
 
@@ -63,6 +64,10 @@ test_lambda
 20
 29
 19
+6
+16
+26
+26
 ```
 
 test_polymorphism 的两个局部对象按构造的逆序销毁：add 先销毁，mp 后销毁。
@@ -127,6 +132,12 @@ after move assign test
 移动赋值时关闭旧文件，接管的新文件最终由目标 File 关闭。
 源码没有成功打开/关闭日志，不能把预期日志当成实测输出。
 
+## V8 包装类型与内存故障实验
+
+- [V8_TYPES.md](V8_TYPES.md)：真实 V8 头文件下的 Maybe<int> 和默认空 Local/MaybeLocal 实验，目标 f02-v8-maybe；只有头文件级操作，没有初始化引擎。
+- [MEMORY_RAII.md](MEMORY_RAII.md)：故意错误的 malloc/free RAII 示例，目标 f02-memory-raii；必须显式选择故障模式，无参数只显示用法。double-free 已复现且待修复，use-after-free 尚未运行或修复。
+- 新 VS Code 任务为 F02: build and run V8 Maybe、F02: diagnose double free、F02: diagnose use after free。错误版诊断任务返回 99 是捕获到错误的信号。
+
 ## 构建与运行
 
 在 Rocky Linux 的仓库根目录执行，命令用 && 连接，编译失败不会运行旧程序：
@@ -142,8 +153,8 @@ cmake --build build/f02-cpp-minimum &&
 
 实验采用 C++20，关闭语言扩展；GCC/Clang 使用 -Wall -Wextra -Wpedantic -Werror。
 实际课堂环境为 Rocky Linux / GNU C++ 14.2.1，未在 Windows 验证。
-2026-10-29 下班保存按用户要求不重新构建/运行，上面的结果引用此前课堂验证。
-未执行本阶段 sanitizer、分配失败注入、故意 double-free/use-after-free 或独立自移动测试。
+本次提交沿用课堂验证记录，不重复执行全套实验。
+未执行 ASan/UBSan、分配失败注入或独立自移动测试。double-free 错误版已用 Valgrind 复现；修复与 use-after-free 实验仍待完成。
 
 ## 在 VS Code 终端中查看输出
 
@@ -155,12 +166,6 @@ Ctrl+Shift+B 在当前机器与搜狗输入法冲突，使用 F1 入口。
 
 ## 下次从这里继续
 
-无捕获 lambda 转函数指针：在 test_lambda 的 add 定义后添加：
-
-```cpp
-int (*callback)(int, int) = add;
-std::cout << callback(4, 5) << std::endl;
-```
-
-预期新增 9。这两行刚布置，尚未写入源码或验证。
-之后继续 lambda 与 C 回调/context 桥接、V8 Local<T>/Maybe/MaybeLocal 阅读及资源错误修复实验。
+先完成 [重复释放修复任务](MEMORY_RAII.md#当前学生任务)：禁止 Buffer 复制，并把内层对象改为引用借用。
+验证只有一次释放、Valgrind 无错误且退出 0；随后再运行与修复 use-after-free。
+资源故障修复及 F02 综合验收尚未完成。

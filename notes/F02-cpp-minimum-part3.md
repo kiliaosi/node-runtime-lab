@@ -141,3 +141,8 @@ auto 推导 lambda 对象类型，[] 是捕获列表，参数和函数体描述�
 F02 后续仍待：lambda 与 C 回调桥接、V8 Maybe/MaybeLocal/Local<T> 类型阅读、故意 double-free/use-after-free 的定位修复实验，以及综合验收。
 本轮未新做 sanitizer 或分配失败注入；不能把普通构建运行和既有文件检查扩写成这些验证。
 覆盖这些小主题不等于已熟练掌握完整 C++，当前继续按最小集推进。
+
+
+## 后续进展（2026-10-30）
+
+无捕获 lambda 转函数指针、显式 context 与捕获对象桥接现已通过；V8 包装类型练习和资源错误诊断见 [第四部分](F02-cpp-minimum-part4.md)。本篇保留截至 2026-10-29 的历史状态；下次从尚未保存的 Buffer double-free 修复继续，F02 仍在进行中。

@@ -265,3 +265,6 @@ void test_context_callback() {
 
   std::cout << invoke_callback(bridge, &work, 2, 4) << std::endl;
 }
+
+
+void test_owned_callback(){}

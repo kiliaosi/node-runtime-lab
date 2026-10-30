@@ -1,4 +1,4 @@
-// Intentionally faulty teaching examples. Run them with the Valgrind tasks.
+// Repaired ownership examples. Verify them with the Valgrind tasks.
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
@@ -9,9 +9,9 @@ class Buffer {
     if (data_ != nullptr) *data_ = 42;
   }
 
-  // Deliberately wrong for an owning raw pointer: copying duplicates the address.
-  Buffer(const Buffer&) = default;
-  Buffer& operator=(const Buffer&) = default;
+  // This buffer owns its allocation; copying would duplicate ownership.
+  Buffer(const Buffer&) = delete;
+  Buffer& operator=(const Buffer&) = delete;
 
   ~Buffer() {
     std::cout << "free " << static_cast<void*>(data_) << std::endl;
@@ -33,7 +33,7 @@ int test_double_free() {
   }
 
   {
-    Buffer second = first;
+    Buffer& second = first;
     std::cout << "copy value: " << *second.data() << std::endl;
   }
 
@@ -43,9 +43,9 @@ int test_double_free() {
 
 int test_use_after_free() {
   int* saved = nullptr;
+  Buffer owner;
 
   {
-    Buffer owner;
     if (!owner.valid()) {
       std::cerr << "allocation failed" << std::endl;
       return 1;
@@ -53,7 +53,7 @@ int test_use_after_free() {
     saved = owner.data();
   }
 
-  // Deliberately wrong: the owner has already released this memory.
+  // The owner is still alive, so the borrowed pointer remains valid.
   std::cout << "borrowed value: " << *saved << std::endl;
   return 0;
 }

@@ -1,12 +1,12 @@
 # F02 C++ 最小集（四）：回调桥接、V8 包装类型与资源错误诊断
 
 日期：2026-10-30
-状态：本轮回调桥接和包装类型练习已验证；资源错误教材已观察，修复尚未完成；F02 仍在进行中。
+状态：本轮回调桥接和包装类型练习已验证；double-free 与 use-after-free 均已修复并通过 Valgrind；F02 整体仍待短综合验收。
 
 前序：[第三部分](F02-cpp-minimum-part3.md)；历史基础见 [第一部分](F02-cpp-minimum-part1.md)、[第二部分](F02-cpp-minimum-part2.md)；总进度见 [PROGRESS.md](../PROGRESS.md)。
 代码：[main.cc](../labs/00-foundations/cpp-minimum/src/main.cc)、[v8_maybe.cc](../labs/00-foundations/cpp-minimum/src/v8_maybe.cc)、[memory_raii.cc](../labs/00-foundations/cpp-minimum/src/memory_raii.cc)。
 
-今天提交不重复编译或运行，以下引用此前课堂已取得的实际结果；没有把未保存的修复写成已通过。
+本次文档更新不重复编译或运行，验证引用课堂已取得的结果。第7节保留故障教材的修复前证据，第8节保留首次修复计划，第9节补齐随后完成的修复与验证。
 
 ## 1. 无捕获 lambda 转函数指针
 
@@ -107,7 +107,7 @@ test_maybe_local 默认构造 Local<String> text、MaybeLocal<String> result，�
 
 ## 7. Valgrind 观察故意错误的 Buffer 教材
 
-memory_raii.cc 是助手提供的故意错误参考材料，不是已验收 File 的新实现，也不声称学生已独立写好修复。
+memory_raii.cc 最初由助手提供为故意错误参考材料，不是已验收 File 的新实现。以下保留初版故障证据；当前源码已经由学生修复，结果见第9节。
 Buffer 用 malloc 管理 int，成功时写入 42，析构释放；默认浅拷贝让两个对象保存同一个地址。
 内层 `Buffer second = first` 结束时先释放一次，外层 first 析构再次释放同一地址，形成 double-free。
 
@@ -117,15 +117,51 @@ Valgrind 3.26.0 课堂实测记录：
 - 没有遗留堆内存不等于没有内存错误；首次有效释放后仍可能发生非法重复释放。
 
 程序必须显式选择故障模式，无参数只显示 usage，不默认执行故障。
-UAF 模式已经写入教材，但尚未运行或修复，不能记成已复现 use-after-free。
+首次记录时 UAF 模式仅已写入、尚未运行或修复；随后已完成该模式的错误诊断与修复，修复前日志保留，后续结果见第9节。
 ASan/UBSan 所需库缺失，本轮没有运行它们；使用现成 Valgrind，没有为此安装依赖。
 
-## 8. 下一次从修复 double-free 继续
+## 8. 首次记录时的修复计划（现已完成）
 
-刚布置、尚未保存或验收的修复：
+以下是首次记录时尚未保存或验收的任务；后续结果已补入第9节：
 - 删除 Buffer 的复制构造和复制赋值，阻止复制出第二个资源所有者。
 - 将本次 second 改为对 first 的引用借用，而不是另建一个负责释放的对象。
-- 用实际输出和 Valgrind 重新检查只释放一次、没有错误；目前不能提前写成退出 0。
+- 当时要求用实际输出和 Valgrind 检查只释放一次、没有错误，不在验证前预设退出 0。
 
-随后才执行并修复 UAF 模式，核对借用指针与所有者的生命周期，再进行 F02 综合验收。
+当时安排随后执行并修复 UAF 模式；目前两项资源修复均已完成，F02 综合验收仍待进行。
 本轮已覆盖 V8 包装类型入门阅读，不等于完成 V8 初始化、HandleScope 成功路径或完整 embedder。
+
+## 9. 后续完成：两项资源错误均已修复
+
+### double-free：禁止复制，内层改为借用
+
+当前 Buffer 的复制构造和复制赋值均为 = delete，内层使用 `Buffer& second = first`。
+second 是 first 的别名，不是第二个资源所有者；读取时 first 仍存活，内层结束不触发另一个 Buffer 的析构。
+只有 first 在函数结束时释放一次，释放日志出现在 after inner scope 之后。
+原日志文案 copy value 保留，不代表当前实际发生复制。
+修复后的 double-free 路径此前已通过 Valgrind：ERROR SUMMARY 0、无泄漏、退出 0。
+
+### use-after-free：让所有者覆盖最后一次读取
+
+当前 owner 声明已放到 test_use_after_free 的函数外层；内层仅检查 valid 并保存 owner.data()。
+分配失败提前返回，成功时在块后读取 saved，而 owner 直到函数退出才析构。
+仍保留借用指针和析构释放，没有通过删除读取或泄漏内存掩盖错误。
+检查 saved != nullptr 不能证明对象仍存活；修复前即使读到 42 也仍是不合法的访问。
+
+最新 UAF 实际输出顺序为：
+
+```text
+borrowed value: 42
+free 0x4da4c80
+```
+
+地址是本次运行示例，每次可能变化；关键是读取先于释放。
+本轮修复后的 UAF 路径 Valgrind 同样为 ERROR SUMMARY 0、无泄漏、退出 0。
+
+本机日志位于被 Git 忽略的构建目录：
+
+- [double-free 修复后](../build/f02-cpp-minimum/valgrind-double-free-after-fix.log)。
+- [use-after-free 修复前](../build/f02-cpp-minimum/valgrind-use-after-free-before-fix.log)和[修复后](../build/f02-cpp-minimum/valgrind-use-after-free-after-fix.log)。
+
+这些结果来自课堂已完成的运行，本次更新文档没有重新执行测试，也没有运行 ASan/UBSan。
+下一步是已有代码上的短综合验收：解释所有权与借用/析构顺序、回调 context 的类型和生命周期、Maybe/MaybeLocal 失败行为与 Local 有效期。
+F02 保持进行中，尚未标记整体通过。

@@ -1,7 +1,7 @@
 # F02 C++ 最小集：资源、所有权、模板与多态
 
 更新日期：2026-10-30
-状态：main.cc 的十一组实验和 file_raii.cc 的七组实验已在课堂验证；新增 V8 包装类型练习和待修复的内存故障教材，F02 整体仍在进行中。
+状态：main.cc 的十一组实验和 file_raii.cc 的七组实验已在课堂验证；V8 包装类型入门与两项内存故障修复也已完成对应课堂检查，F02 整体仍在进行中，下一步是短综合验收。
 
 课程范围见 [CURRICULUM.md](../../../docs/CURRICULUM.md)，总进度见 [PROGRESS.md](../../../PROGRESS.md)。
 笔记：[引用与 unique_ptr](../../../notes/F02-cpp-minimum-part1.md)、[File RAII](../../../notes/F02-cpp-minimum-part2.md)、[移动赋值到 lambda 捕获](../../../notes/F02-cpp-minimum-part3.md)、[回调桥接与 V8 类型](../../../notes/F02-cpp-minimum-part4.md)。
@@ -135,8 +135,8 @@ after move assign test
 ## V8 包装类型与内存故障实验
 
 - [V8_TYPES.md](V8_TYPES.md)：真实 V8 头文件下的 Maybe<int> 和默认空 Local/MaybeLocal 实验，目标 f02-v8-maybe；只有头文件级操作，没有初始化引擎。
-- [MEMORY_RAII.md](MEMORY_RAII.md)：故意错误的 malloc/free RAII 示例，目标 f02-memory-raii；必须显式选择故障模式，无参数只显示用法。double-free 已复现且待修复，use-after-free 尚未运行或修复。
-- 新 VS Code 任务为 F02: build and run V8 Maybe、F02: diagnose double free、F02: diagnose use after free。错误版诊断任务返回 99 是捕获到错误的信号。
+- [MEMORY_RAII.md](MEMORY_RAII.md)：独立的 malloc/free RAII 故障教材，目标 f02-memory-raii；文档保留错误版复现，当前源码的 double-free 和 use-after-free 均已修复并通过 Valgrind。仍需显式选择实验模式，无参数只显示用法。
+- 新 VS Code 任务为 F02: build and run V8 Maybe、F02: diagnose double free、F02: diagnose use after free。错误版在检测到错误时返回 99；当前两个修复版均返回 0，没有 Valgrind 错误或泄漏。
 
 ## 构建与运行
 
@@ -154,7 +154,7 @@ cmake --build build/f02-cpp-minimum &&
 实验采用 C++20，关闭语言扩展；GCC/Clang 使用 -Wall -Wextra -Wpedantic -Werror。
 实际课堂环境为 Rocky Linux / GNU C++ 14.2.1，未在 Windows 验证。
 本次提交沿用课堂验证记录，不重复执行全套实验。
-未执行 ASan/UBSan、分配失败注入或独立自移动测试。double-free 错误版已用 Valgrind 复现；修复与 use-after-free 实验仍待完成。
+未执行 ASan/UBSan、分配失败注入或独立自移动测试。double-free 与 use-after-free 的错误版诊断保留为历史证据；修复后两个模式均经 Valgrind 3.26.0 确认 ERROR SUMMARY 为 0、无泄漏、退出码为 0。
 
 ## 在 VS Code 终端中查看输出
 
@@ -166,6 +166,6 @@ Ctrl+Shift+B 在当前机器与搜狗输入法冲突，使用 F1 入口。
 
 ## 下次从这里继续
 
-先完成 [重复释放修复任务](MEMORY_RAII.md#当前学生任务)：禁止 Buffer 复制，并把内层对象改为引用借用。
-验证只有一次释放、Valgrind 无错误且退出 0；随后再运行与修复 use-after-free。
-资源故障修复及 F02 综合验收尚未完成。
+两项资源故障修复已完成，过程与日志见 [MEMORY_RAII.md](MEMORY_RAII.md)。
+下一步用已有代码做短综合验收：解释资源的所有者与借用者、析构和最后一次访问的顺序、回调 context 的类型与生命周期，以及 Maybe/MaybeLocal 的失败处理。
+F02 整体仍在进行中，尚未标记通过综合验收。

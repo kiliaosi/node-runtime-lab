@@ -57,6 +57,33 @@
       "runOptions": {
         "instanceLimit": 1
       }
+    },
+    {
+      "label": "F02: build and run V8 Maybe",
+      "type": "process",
+      "command": "/bin/bash",
+      "args": [
+        "-lc",
+        "source scripts/activate-lab.sh && cmake -S labs/00-foundations/cpp-minimum -B build/f02-cpp-minimum -DCMAKE_BUILD_TYPE=Debug && cmake --build build/f02-cpp-minimum --target f02-v8-maybe && ./build/f02-cpp-minimum/f02-v8-maybe"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated",
+        "clear": true,
+        "echo": true,
+        "showReuseMessage": true
+      },
+      "runOptions": {
+        "instanceLimit": 1
+      }
     }
   ]
 }

@@ -49,9 +49,17 @@
 - [Microsoft C++ command-line tools](https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line)：MSVC/Build Tools 命令行环境。
 - [CMake documentation](https://cmake.org/documentation/) 与 [Ninja manual](https://ninja-build.org/manual.html)：实验项目和上游构建工具。
 
+## 操作系统深研
+
+- [Operating Systems: Three Easy Pieces](https://pages.cs.wisc.edu/~remzi/OSTEP/)：作者提供的理论章节、习题与项目，围绕虚拟化、并发和持久化组织学习。
+- [MIT xv6-riscv](https://github.com/mit-pdos/xv6-riscv)：教学操作系统，固定 commit 进行内核机制实验。
+- [Linux Kernel Documentation](https://docs.kernel.org/)：核心机制、子系统、调试与测试文档，结合实际发行版或选定实验内核的源码阅读。
+
+学习顺序与验收见 [OS_STUDY_PLAN.md](OS_STUDY_PLAN.md)。
+
 ## 使用规则
 
 1. 链接到 `main` 的资料只用于通用流程；研究行为时切换到课程 tag。
 2. V8 在线 API 页面通常展示 `head`，遇到签名差异立即回到 `deps/v8/include`。
 3. 博客里的架构图有发布日期，不能默认代表当前所有实现细节。
-4. 每篇源码笔记记录 Node/libuv/V8 的 tag 或完整 commit。
+4. 每篇源码笔记记录 Node/libuv/V8/xv6 的 tag 或完整 commit；Linux 记录完整内核版本、发行版补丁、配置和源码出处。

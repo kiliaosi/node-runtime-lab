@@ -16,12 +16,14 @@
 | 阶段 | Rocky Linux 9 | Windows 11 原生 | 同步到 GitHub |
 | --- | --- | --- | --- |
 | F00–F02 | GCC/GDB/ELF 实验 | MSVC 或 ClangCL/WinDbg/PE 实验 | 公共代码、两份观测笔记 |
-| F03 | 进程、fd、pipe、signal、`epoll` | HANDLE、overlapped I/O、IOCP 基础 | 概念对照笔记 |
+| F03 深入 OS | 进程/调度、内存、同步、文件系统、I/O、网络、隔离；Linux 源码与诊断 | 进程/HANDLE、虚拟内存、同步、overlapped I/O/IOCP 与 ETW 对照 | 实验代码、机制对照、故障报告与源码修改摘要 |
 | L01–L08 | libuv 公共 API | 同一套 libuv 公共 API | 实验代码只保留一份 |
 | LS | `src/unix`、`src/linux`、`epoll` | `src/win`、IOCP | 调用链与平台差异图 |
 | V / VS | 默认主要构建环境 | 可做公共 API；Windows 全量构建按需 | embedder 代码、源码笔记 |
 | N | Linux Node 调用链与诊断 | Windows 专属 binding/IOCP 按需 | JS 测试、跨平台结论 |
 | E | 服务端性能、故障与贡献 | Windows 兼容性验证 | 最终项目代码和报告 |
+
+F03 的完整深研路线见 [OS_STUDY_PLAN.md](OS_STUDY_PLAN.md)。教学内核在模拟器中学习；Linux 内核修改与崩溃/资源压力实验使用独立可重置 VM。原生 Windows 的 API 与内核行为在 Windows 验证，各平台记录实际版本和配置。
 
 ## 工具对应关系
 

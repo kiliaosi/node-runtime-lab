@@ -16,6 +16,7 @@ void test_polymorphism();
 void test_polymorphic_owner();
 void test_lambda();
 void test_context_callback();
+void test_owned_callback();
 
 struct Trace {
   Trace() { std::puts("create"); }
@@ -95,6 +96,8 @@ int main() {
   test_lambda();
 
   test_context_callback();
+
+  test_owned_callback();
 }
 
 void test_scope() {
@@ -266,5 +269,20 @@ void test_context_callback() {
   std::cout << invoke_callback(bridge, &work, 2, 4) << std::endl;
 }
 
+void test_owned_callback() {
+  std::unique_ptr<Operation> p = std::make_unique<MultiplyOperation>();
 
-void test_owned_callback(){}
+  Operation* borrowed = p.get();
+
+  ContextCallback ccb = [](int a, int b, void* context) {
+    return (static_cast<Operation*>(context))->run(a, b);
+  };
+
+  std::unique_ptr<Operation> second = std::move(p);
+
+  std::cout << (p == nullptr) << std::endl;
+
+  auto result = invoke_callback(ccb, borrowed, 2, 3);
+
+  std::cout << result << std::endl;
+}

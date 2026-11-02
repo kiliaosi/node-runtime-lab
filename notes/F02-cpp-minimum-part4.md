@@ -1,7 +1,7 @@
 # F02 C++ 最小集（四）：回调桥接、V8 包装类型与资源错误诊断
 
-日期：2026-10-30
-状态：本轮回调桥接和包装类型练习已验证；double-free 与 use-after-free 均已修复并通过 Valgrind；F02 整体仍待短综合验收。
+日期：2026-10-30；验收更新：2026-11-02
+状态：F02 已通过本阶段验收。此前两项资源错误修复通过；最终综合练习的构建运行与 V8 口头核对于 2026-11-02 完成，见第11节。
 
 前序：[第三部分](F02-cpp-minimum-part3.md)；历史基础见 [第一部分](F02-cpp-minimum-part1.md)、[第二部分](F02-cpp-minimum-part2.md)；总进度见 [PROGRESS.md](../PROGRESS.md)。
 代码：[main.cc](../labs/00-foundations/cpp-minimum/src/main.cc)、[v8_maybe.cc](../labs/00-foundations/cpp-minimum/src/v8_maybe.cc)、[memory_raii.cc](../labs/00-foundations/cpp-minimum/src/memory_raii.cc)。
@@ -163,11 +163,11 @@ free 0x4da4c80
 - [use-after-free 修复前](../build/f02-cpp-minimum/valgrind-use-after-free-before-fix.log)和[修复后](../build/f02-cpp-minimum/valgrind-use-after-free-after-fix.log)。
 
 这些结果来自课堂已完成的运行，本次更新文档没有重新执行测试，也没有运行 ASan/UBSan。
-下一步综合验收的具体任务见第10节。F02 保持进行中，尚未标记整体通过。
+2026-10-30 布置的综合验收任务见第10节；2026-11-02 完成结果见第11节。
 
-## 10. 下班保存点：最后一项综合编码练习
+## 10. 2026-10-30 保存点：最后一项综合编码练习（现已完成）
 
-当前 src/main.cc 末尾已保存 `void test_owned_callback(){}` 空函数，尚未实现、添加前置声明或接入 main。本次提交保存学习断点，没有编译或运行这个新练习。
+当时 src/main.cc 末尾保存了 void test_owned_callback(){} 空函数，尚未实现、添加前置声明或接入 main。以下保留原任务要求，实际完成结果见第11节。
 
 回家后补全 test_owned_callback，复用现有 Operation、MultiplyOperation、ContextCallback 和 invoke_callback：
 
@@ -190,4 +190,31 @@ Operation destroy
 
 核对重点：first 为空后 borrowed 为什么仍能用于此处的同步回调；资源由谁持有，何时释放。
 
-这是 F02 最后一项综合编码练习。实现并通过检查后，再简短核对 Maybe/MaybeLocal 的失败处理和 Local 句柄生命周期，即可完成 F02 验收，进入 F03 操作系统运行时最小集。
+这是 F02 最后一项综合编码练习；完成后衔接的 F03 已升级为操作系统深入学习主线。
+
+## 11. 2026-11-02：最终综合验收通过
+
+学生完成 test_owned_callback，补齐声明和 main 调用。最终实现保存 Operation* borrowed，移动 unique_ptr<Operation> p 到 second，在 second 存活期间通过无捕获回调和 void* context 调用 MultiplyOperation::run(2, 3)，并输出返回值。
+
+实际使用变量 p 和参数 2、3，因此结果为 6；第10节的 first、3、4 与带标签的输出保留为原任务示例。此次严格构建和程序运行的退出码均为 0，实际末尾输出为：
+
+```text
+1
+6
+MultiplyOperation destroy
+Operation destroy
+```
+
+完整控制台输出保存在本机被 Git 忽略的 build/f02-cpp-minimum/lifetime-owned-callback-check.log。前面的输出属于原有实验；这里两条析构日志表示同一个对象先析构派生类部分，再析构基类部分。
+
+修正过程中，曾误把 int* 的 &bias 传给要求 Operation* 的回调，borrowed 未使用使严格构建失败；改为正确的借用指针后，再补齐回调结果输出。void* 转换依赖调用双方约定，不会把 int 对象变成 Operation 对象。
+
+最终 V8 核对全部正确：
+
+- Nothing<int>().To(&out) 返回 false，out 保留原值 -99。
+- 空 MaybeLocal::ToLocal 返回 false，API 约定将输出 Local 置空。默认空输出的实验只能观察到空状态；“清空输出”同时由本机头文件实现确认。
+- 普通 HandleScope 内创建的 Local 在该作用域结束后失效，复制到外层变量不能延长其有效期；这不表示 JS 对象立即被 GC 回收。跨作用域持有强引用可使用 v8::Global。
+
+上述句柄生命周期核对属于源码阅读与口头验收，未新增真实 V8 引擎或 GC 实验。结合前面的 File RAII、模板/多态/回调及 Valgrind 修复证据，F02 已达到本阶段 C++ 最小集要求。
+
+下一步进入 [F03 操作系统深入学习主线](../docs/OS_STUDY_PLAN.md) 的 OS00。

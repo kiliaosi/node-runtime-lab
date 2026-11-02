@@ -6,7 +6,7 @@
 
 - [x] F00 环境、编译与证据链
 - [x] F01 C 最小集
-- [~] F02 C++ 最小集
+- [x] F02 C++ 最小集
 - [ ] F03 操作系统深入学习主线（目标已升级，尚未开始）
 - [ ] F-GATE 基础闸门
 
@@ -81,7 +81,7 @@
 用户明确将操作系统从最小集升级为深入掌握的长期主线。以 Linux 为主要实现与诊断对象，原生 Windows 做机制对照；课程覆盖硬件/内核边界、进程与调度、虚拟内存、并发同步、文件系统、I/O、网络、隔离与内核实现。路线和验收见 [OS_STUDY_PLAN.md](docs/OS_STUDY_PLAN.md)。
 
 - 验收按机制理解、独立实现、故障诊断、源码修改与回归证据分别记录。
-- 当前仅完成课程调整，F03 尚未开课；先完成 F02 的 test_owned_callback 和 V8 短核对，再进入 OS00。
+- F02 已于 2026-11-02 通过验收；F03 尚未开课，下一步进入 OS00。
 - 保留 libuv、V8、Node 后续目标，以真实运行时问题持续深化 OS；学习周期按验收调整。
 
 ## F01 当前进度（2026-10-22）
@@ -96,10 +96,10 @@ F01 已通过本轮验收。课程要求的 C 最小集主干、综合任务链�
 - 后续巩固：声明、定义、调用保持一致；保存后核对实际编译文件；逐节点预测每次遍历；区分空指针检查与对象是否仍存活。
 - 后续衔接：当日已进入 F02，并完成引用口头练习和首组生命周期/所有权代码实验；最新状态见下方 F02 当前进度。
 
-## F02 当前进度（2026-10-30）
+## F02 当前进度（2026-11-02）
 
-F02 正在进行。RAII/移动语义、智能指针、基础模板、多态、lambda 与 C 风格回调桥接已完成对应课堂练习；
-V8 Maybe/空局部句柄实验与 HandleScope/持久句柄阅读已推进；double-free 和 use-after-free 均已修复并通过 Valgrind，短综合验收仍待完成。
+F02 已通过本阶段验收。RAII/移动语义、智能指针、基础模板、多态、lambda 与 C 风格回调桥接已完成对应课堂练习；
+V8 包装类型和句柄生命周期核对通过；double-free 与 use-after-free 修复已通过 Valgrind，最终综合练习已严格编译运行通过。
 
 笔记：[第一部分](notes/F02-cpp-minimum-part1.md)、[第二部分](notes/F02-cpp-minimum-part2.md)、
 [第三部分](notes/F02-cpp-minimum-part3.md)、[第四部分](notes/F02-cpp-minimum-part4.md)。
@@ -112,10 +112,11 @@ V8 Maybe/空局部句柄实验与 HandleScope/持久句柄阅读已推进；doub
 - 内存故障历史：助手提供独立 memory_raii.cc 故障教材；默认浅拷贝导致同地址二次释放，Valgrind 3.26.0 已复现 Invalid free、ERROR SUMMARY 1、退出 99；释放后读取也已复现并保留修复前日志。没有泄漏不代表没有内存错误。
 - 两项修复已验证：删除 Buffer 的复制构造/赋值，second 改为 Buffer& 借用；将 UAF 案例的 owner 声明放到函数外层，使 saved 最后一次读取先于 owner 析构。double-free、use-after-free 两个修复版均 ERROR SUMMARY 0、无泄漏、退出 0。当前源码已修复，错误示例作为历史材料保留。
 - 本机证据：build/f02-cpp-minimum/valgrind-double-free-after-fix.log 与 valgrind-use-after-free-after-fix.log；UAF 输出 borrowed value: 42 后才出现 free 地址日志。
-- 下班保存点：main.cc 末尾已建立 test_owned_callback 空函数，尚未实现、添加前置声明或接入 main，也未验证此练习。
-- 续学入口：补全最后一项综合编码练习，将 unique_ptr 所有权移动、多态和 void* 回调借用串起来，要求见[第四部分笔记](notes/F02-cpp-minimum-part4.md)。实现并通过运行检查后，再简短核对 Maybe/MaybeLocal 失败处理与 Local 句柄有效期；两项通过后完成 F02，进入 F03 操作系统运行时最小集。
-- 当前边界：资源错误两项修复已通过课堂检查，F02 综合验收尚未完成。ASan/UBSan 库缺失，未执行；独立自移动、分配失败注入仍未覆盖。V8 仍是包装类型与生命周期入门，没有初始化引擎或实测 GC。
-- 提交记录：修复代码独立提交；本次文档记录已取得的课堂证据，不重复运行测试，F02 保持进行中。
+- 最终综合练习：test_owned_callback 已实现并接入 main。unique_ptr<Operation> p 管理 MultiplyOperation，保存 borrowed 后移动到 second，再通过 void* context 恢复 Operation* 并调用 run(2, 3)。实际输出依次为 1、6、MultiplyOperation destroy、Operation destroy；构建及运行退出码均为 0。完整输出记录于 build/f02-cpp-minimum/lifetime-owned-callback-check.log。
+- V8 口头验收：学生正确回答 Nothing<int>::To 返回 false 且保留 out=-99；空 MaybeLocal::ToLocal 返回 false 并清空输出；普通 HandleScope 结束后其内部创建的 Local 失效，JS 对象不一定立即回收，跨作用域强引用可用 Global。此项是已有头文件实验、源码契约与口头理解核对。
+- 续学入口：进入 F03 操作系统深入学习主线，从 OS00“程序如何进入内核，又如何回到用户态”开始，路线见 [OS_STUDY_PLAN.md](docs/OS_STUDY_PLAN.md)。
+- 当前边界：F02 通过表示达到本阶段 C++ 最小集要求。V8 未初始化真实引擎或实测 GC；ASan/UBSan、独立自移动、分配失败注入仍未覆盖。后续通过真实运行时与 OS 实验继续巩固独立实现和诊断能力。
+- 验收记录：2026-11-02 已完成最终构建运行和 V8 核对；本次文档整理沿用这些结果，未重新运行其他已通过实验。
 
 ## 训练日志
 
@@ -136,3 +137,4 @@ V8 Maybe/空局部句柄实验与 HandleScope/持久句柄阅读已推进；doub
 | 2026-10-30 | F02 资源错误修复 | 禁止 Buffer 复制并改为引用借用；UAF 的 owner 外移，保证最后一次读取早于析构；两条修复路径 Valgrind 均 0 错误、无泄漏、退出 0，保留修复前日志 | 非空借用指针仍可能悬空；引用不是新增资源所有者；无泄漏与无非法访问是不同检查 | 基于已有代码完成 F02 短综合验收，暂不标整阶段通过 |
 | 2026-10-30 | F02 下班保存点 | 保存 test_owned_callback 空函数和综合练习要求，函数体、前置声明、main 调用尚待补齐；此次未编译或运行新练习 | 借用指针应在新所有者 second 存活期间使用；预期输出尚非实测结果 | 回家补全综合练习并验证，再核对 V8 失败处理与句柄生命周期，完成 F02 后进入 F03 |
 | 2026-10-30 | F03 目标升级 | 将操作系统从最小集调整为深入学习主线，新增路线与分层验收，更新总纲和平台安排 | 当前只调整计划，F03 尚未开始；保持 F02 收尾任务 | 完成 test_owned_callback 与 V8 短核对后，从 OS00 进入执行与内核边界 |
+| 2026-11-02 | F02 通过验收 | 完成 test_owned_callback，严格构建与运行退出 0，实际输出 1/6/派生析构/基类析构；V8 最后三项核对全部正确 | 纠正 void* 上下文实际类型不匹配和遗漏返回值输出；巩固移动所有权后借用指针有效期及句柄与 GC 的区别 | 进入 F03 深入 OS，从 OS00 的用户态/内核态与系统调用开始 |

@@ -1,7 +1,7 @@
 # F02 C++ 最小集：资源、所有权、模板与多态
 
-更新日期：2026-10-30
-状态：main.cc 的十一组实验和 file_raii.cc 的七组实验已在课堂验证；V8 包装类型入门与两项内存故障修复也已完成对应课堂检查，F02 整体仍在进行中，下一步是短综合验收。
+更新日期：2026-11-02
+状态：F02 已通过本阶段验收。main.cc 十二组实验、File 七组实验、V8 包装类型入门、两项内存错误修复与最终 V8 口头核对均已完成对应课堂检查。
 
 课程范围见 [CURRICULUM.md](../../../docs/CURRICULUM.md)，总进度见 [PROGRESS.md](../../../PROGRESS.md)。
 笔记：[引用与 unique_ptr](../../../notes/F02-cpp-minimum-part1.md)、[File RAII](../../../notes/F02-cpp-minimum-part2.md)、[移动赋值到 lambda 捕获](../../../notes/F02-cpp-minimum-part3.md)、[回调桥接与 V8 类型](../../../notes/F02-cpp-minimum-part4.md)。
@@ -23,6 +23,7 @@
 | test_polymorphic_owner | unique_ptr<Operation> 持有 MultiplyOperation，输出 12，先派生析构、后基类析构 |
 | test_lambda | 无捕获输出 9、20；捕获输出 29、19；函数指针调用输出 6 |
 | test_context_callback | int context 输出 16、26；闭包对象 context 输出 26 |
+| test_owned_callback | p 移动到 second 后为空；借用指针回调计算 2×3 输出 6；函数结束先派生析构、后基类析构 |
 
 Operation 是抽象类，run 为纯虚函数，析构为虚函数。
 MultiplyOperation 的析构使用 override。ValueBox 构造函数使用 explicit 和成员初始化列表。
@@ -68,6 +69,10 @@ test_lambda
 16
 26
 26
+1
+6
+MultiplyOperation destroy
+Operation destroy
 ```
 
 test_polymorphism 的两个局部对象按构造的逆序销毁：add 先销毁，mp 后销毁。
@@ -153,7 +158,7 @@ cmake --build build/f02-cpp-minimum &&
 
 实验采用 C++20，关闭语言扩展；GCC/Clang 使用 -Wall -Wextra -Wpedantic -Werror。
 实际课堂环境为 Rocky Linux / GNU C++ 14.2.1，未在 Windows 验证。
-本次提交沿用课堂验证记录，不重复执行全套实验。
+2026-11-02 重新构建并运行 f02-lifetime，退出码均为 0；其余实验沿用此前课堂验证记录。最终 V8 口头核对已通过。
 未执行 ASan/UBSan、分配失败注入或独立自移动测试。double-free 与 use-after-free 的错误版诊断保留为历史证据；修复后两个模式均经 Valgrind 3.26.0 确认 ERROR SUMMARY 为 0、无泄漏、退出码为 0。
 
 ## 在 VS Code 终端中查看输出
@@ -164,13 +169,10 @@ cmake --build build/f02-cpp-minimum &&
 Ctrl+Shift+B 在当前机器与搜狗输入法冲突，使用 F1 入口。
 当前机器的补全/格式化设置保留在本地工作区，不随本轮课程提交发布。
 
-## 下次从这里继续
+## 验收完成与下一步
 
-两项资源故障修复已完成，过程与日志见 [MEMORY_RAII.md](MEMORY_RAII.md)。
-当前保存点：src/main.cc 末尾只有 test_owned_callback 空函数，尚未实现、添加前置声明或接入 main，此练习尚未验证。
+2026-11-02，test_owned_callback 严格构建运行通过，实际末尾输出为 1、6、MultiplyOperation destroy、Operation destroy。学生随后正确回答 Maybe/MaybeLocal 的失败处理、Local 的有效期及 Global 强引用用途，F02 已通过本阶段验收。
 
-1. 补全 test_owned_callback：unique_ptr<Operation> 管理 MultiplyOperation，取得借用指针后移动所有权，再通过无捕获回调与 void* context 调用 run。具体要求和预期输出见[第四部分笔记末尾](../../../notes/F02-cpp-minimum-part4.md)。
-2. 补上声明和 main 调用，运行 F02: build and run lifetime，核对结果与析构顺序。
-3. 简短核对 Maybe/MaybeLocal 的失败处理及 Local 句柄生命周期。
+代码、实际输出和核对记录见[第四部分笔记](../../../notes/F02-cpp-minimum-part4.md)。两项资源故障修复记录保留于 [MEMORY_RAII.md](MEMORY_RAII.md)。
 
-完成以上验收后结束 F02，进入 F03 操作系统运行时最小集；当前 F02 保持进行中。
+下一步进入 [F03 操作系统深入学习主线](../../../docs/OS_STUDY_PLAN.md)，从 OS00“程序如何进入内核，又如何回到用户态”开始。

@@ -102,4 +102,6 @@ cmake --build .\build\toolchain-smoke-win --config Debug
 
 ## 当前起点
 
-从 `F00` 环境与工具链开始，然后进入 `L01`。在真正学习 Node 事件循环之前，先自己使用 libuv 造出一个事件循环程序；在阅读 Node binding 之前，先自己用 V8 API 把 C++ 函数暴露给 JavaScript。
+截至 2026-11-02，F00、F01、F02 已通过本阶段验收；当前正在 F03 的 OS00，已完成系统调用边界与 open → write → close 实验。下一次从 [fd 复用练习](labs/00-foundations/os-runtime/00-syscalls/FD_REUSE.md) 继续，先实现 `fd_reuse.c`，再观察编号与文件目标的关系。
+
+当天记录见 [OS00 第一部分笔记](notes/OS00-syscalls-part1.md)，完整状态见 [PROGRESS.md](PROGRESS.md)。后续仍沿着 libuv、V8、Node 的既定路线推进。

@@ -219,6 +219,33 @@
       "runOptions": {
         "instanceLimit": 1
       }
+    },
+    {
+      "label": "F03 OS00: build and trace fd offset",
+      "type": "process",
+      "command": "/bin/bash",
+      "args": [
+        "-lc",
+        "source scripts/activate-lab.sh && cmake -S labs/00-foundations/os-runtime/00-syscalls -B build/f03-os00 -DCMAKE_BUILD_TYPE=Debug && cmake --build build/f03-os00 --target f03-os00-fd-offset && cd build/f03-os00 && strace -y -e trace=open,openat,dup,write,close,exit_group ./f03-os00-fd-offset"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated",
+        "clear": true,
+        "echo": true,
+        "showReuseMessage": true
+      },
+      "runOptions": {
+        "instanceLimit": 1
+      }
     }
   ]
 }

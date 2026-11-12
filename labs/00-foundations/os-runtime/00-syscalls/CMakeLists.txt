@@ -24,3 +24,8 @@ add_executable(f03-os00-fd-reuse src/fd_reuse.c)
 target_compile_options(f03-os00-fd-reuse PRIVATE
   -O0 -g -Wall -Wextra -Wpedantic -Werror
 )
+
+add_executable(f03-os00-fd-offset src/fd_offset.c)
+target_compile_options(f03-os00-fd-offset PRIVATE
+  -O0 -g -Wall -Wextra -Wpedantic -Werror
+)

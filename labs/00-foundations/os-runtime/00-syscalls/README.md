@@ -77,6 +77,11 @@ write(1, "hello kernel\n", 13) = 13
 
 [自己管理文件描述符：open → write → close](FILE_WRITE.md)已通过本轮验收；最终正常运行与模拟 close 失败，以及此前真实短写等证据见该文档。
 
-下一步：[文件描述符的复用](FD_REUSE.md)，学生实现待完成。
+后续已验证的实验：
+
+- [文件描述符的复用](FD_REUSE.md)（fd_reuse.c）：正常运行和两个 open 失败分支已验证。
+- 文件偏移对照（fd_offset.c）：严格构建通过，dup 共享偏移的文件为 ABCX，独立 open 的文件为 XBC。
+
+进程与调度的续学记录见 [F03 笔记](../../../../notes/F03-process-scheduling.md)。
 
 本日学习笔记：[OS00（一）：系统调用边界与文件描述符生命周期](../../../../notes/OS00-syscalls-part1.md)。
